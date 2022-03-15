@@ -16,7 +16,7 @@ import {
 } from '@layouts/Workspace/styles';
 import fetcher from '@utils/fetcher';
 import axios from 'axios';
-import React, { FC, useCallback, useState, VFC } from 'react';
+import React, { FC, useCallback, useEffect, useState, VFC } from 'react';
 import { Redirect, Route, Switch, useParams } from 'react-router';
 import useSWR, { mutate } from 'swr';
 import gravatar from 'gravatar';
@@ -33,6 +33,7 @@ import InviteWorkspaceModal from '@components/InviteWorkspace';
 import InviteChannelModal from '@components/InviteChannelModal';
 import ChannelList from '@components/ChannelList';
 import DMList from '@components/DMList';
+import useSocket from '@hooks/useSocket';
 
 const Channel = loadable(() => import('@pages/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage'));
@@ -60,6 +61,12 @@ const Workspace: VFC = () => {
 
     const { data: memberData } = useSWR<IUser[]>(
       userData ? `/api/workspaces/${workspace}/members` : null, fetcher);
+
+    const [socket, disconnect] = useSocket(workspace);
+
+    useEffect(() => {
+
+    }, [])
 
   const onLogout = useCallback(() => {
     axios

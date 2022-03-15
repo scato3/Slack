@@ -10,17 +10,39 @@ import gravatar from 'gravatar';
 
 interface Props {
   chat: string;
+  onSubmitForm: (e:any) => void;
+  onChangeChat: (e:any) => void;
+  placeholder?: string;
 }
-const ChatBox: VFC<Props> = ({ chat }) => {
+const ChatBox: VFC<Props> = ({ chat, onSubmitForm, onChangeChat, placeholder }) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if(textareaRef.current) {
+      autosize(textareaRef.current) 
+    }
+  }, [])
 
-  const onSubmitForm = useCallback(() => {}, []);
+  const onKeydownChat = useCallback((e) => {
+    if(e.key === 'Enter') {
+      if(!e.shiftKey) {
+        e.preventDefault();
+        onSubmitForm(e);
+      }
+    }
+  }, [onSubmitForm])
+
   return (
     <ChatArea>
       <Form onSubmit={onSubmitForm}>
-        <MentionsTextarea>
-            <textarea />
+        <MentionsTextarea
+        id="editor-chat"
+        value={chat}
+        onChange={onChangeChat}
+        onKeyPress={onKeydownChat}
+        placeholder={placeholder}
+        ref={textareaRef}
+        >
         </MentionsTextarea>
-
         <Toolbox>
           <SendButton
             className={
