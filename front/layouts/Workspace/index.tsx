@@ -49,24 +49,25 @@ const Workspace: VFC = () => {
   const [newUrl, onChangeNewUrl, setNewUrl] = useInput('');
 
   const { workspace } = useParams<{ workspace: string }>();
-  const { data: userData, error, revalidate, mutate } = useSWR<IUser | false>(
-    '/api/users',
-    fetcher,
-    {
-      dedupingInterval: 2000,
-    },
-  );
-  const { data: channelData } = useSWR<IChannel[]>(
-    userData ? `/api/workspaces/${workspace}/channels` : null, fetcher);
+  const { data: userData, error, revalidate, mutate } = useSWR<IUser | false>('/api/users', fetcher, {
+    dedupingInterval: 2000,
+  });
+  const { data: channelData } = useSWR<IChannel[]>(userData ? `/api/workspaces/${workspace}/channels` : null, fetcher);
 
-    const { data: memberData } = useSWR<IUser[]>(
-      userData ? `/api/workspaces/${workspace}/members` : null, fetcher);
+  const { data: memberData } = useSWR<IUser[]>(userData ? `/api/workspaces/${workspace}/members` : null, fetcher);
 
-    const [socket, disconnect] = useSocket(workspace);
+  const [socket, disconnect] = useSocket(workspace);
 
-    useEffect(() => {
-
-    }, [])
+  useEffect(() => {
+    if (channelData && userData && socket) {
+      socket.emit('login', { id: userData.id, channels: channelData.map((v) => v.id) });
+    }
+  }, [socket, channelData, userData]);
+  useEffect(() => {
+    return () => {
+      disconnect();
+    }
+  }, [workspace, disconnect]);
 
   const onLogout = useCallback(() => {
     axios
@@ -134,7 +135,7 @@ const Workspace: VFC = () => {
 
   const onClickInviteWorkspace = useCallback(() => {
     setShowInviteWorkspaceModal(true);
-  }, [])
+  }, []);
 
   if (!userData) {
     return <Redirect to="/login" />;
@@ -163,13 +164,14 @@ const Workspace: VFC = () => {
       </Header>
       <WorkspaceWrapper>
         <Workspaces>
-          {userData.Workspaces && userData?.Workspaces.map((ws) => {
-            return (
-              <Link key={ws.id} to={`/workspace/${123}/channel/일반`}>
-                <WorkspaceButton>{ws.name.slice(0, 1).toUpperCase()}</WorkspaceButton>
-              </Link>
-            );
-          })}
+          {userData.Workspaces &&
+            userData?.Workspaces.map((ws) => {
+              return (
+                <Link key={ws.id} to={`/workspace/${123}/channel/일반`}>
+                  <WorkspaceButton>{ws.name.slice(0, 1).toUpperCase()}</WorkspaceButton>
+                </Link>
+              );
+            })}
           <AddButton onClick={onClickCreateWorkspace}>+</AddButton>
         </Workspaces>
         <Channels>
@@ -212,8 +214,16 @@ const Workspace: VFC = () => {
         onCloseModal={onCloseModal}
         setShowCreateChannelModal={setShowCreateChannelModal}
       />
-      <InviteWorkspaceModal show={showInviteWorkspaceModal} onCloseModal={onCloseModal} setShowInviteWorkspaceModal= {setShowInviteWorkspaceModal} />
-      <InviteChannelModal show={showInviteChannelModal} onCloseModal={onCloseModal} setShowInviteChannelModal= {setShowInviteChannelModal} />
+      <InviteWorkspaceModal
+        show={showInviteWorkspaceModal}
+        onCloseModal={onCloseModal}
+        setShowInviteWorkspaceModal={setShowInviteWorkspaceModal}
+      />
+      <InviteChannelModal
+        show={showInviteChannelModal}
+        onCloseModal={onCloseModal}
+        setShowInviteChannelModal={setShowInviteChannelModal}
+      />
     </div>
   );
 };

@@ -24,7 +24,7 @@ const LogIn = () => {
             withCredentials: true,
         })
         .then((response) => {
-            mutate(response.data, false); // OPTIMISTIC UI true
+            revalidate();
         })
         .catch((error) => {
             setLogInError(error.response?.data?.statusCode === 401);
